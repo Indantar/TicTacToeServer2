@@ -12,8 +12,13 @@ public class TicTacToeServer extends JFrame {
    private Player[] players;
    private ServerSocket server;
    private int currentPlayer;
+   private int count;
    private final int PLAYER_X = 0, PLAYER_O = 1;
    private final char X_MARK = 'X', O_MARK = 'O';
+   private String player1 = "player 1";
+   private String player2 = "player 2";
+   private String winner = "";
+   private final String result = "The result is:";
 
    // set up tic-tac-toe server and GUI that displays messages
    public TicTacToeServer()
@@ -84,8 +89,7 @@ public class TicTacToeServer extends JFrame {
             public void run() // updates outputArea
             {
                outputArea.append( messageToDisplay );
-               outputArea.setCaretPosition( 
-                  outputArea.getText().length() );
+               outputArea.setCaretPosition(outputArea.getText().length() );
             }
 
          }  // end inner class
@@ -145,12 +149,78 @@ public class TicTacToeServer extends JFrame {
       else
           return false;
    }
-
-   // place code in this method to determine whether game over 
+   // place code in this method to determine whether game over
    public boolean isGameOver()
    {
-      if(board[0] == X_MARK && board[1] == X_MARK && board[2] == X_MARK)
-         
+      if(board[0] == X_MARK && board[1] == X_MARK && board[2] == X_MARK || board[0] == O_MARK && board[1] == O_MARK && board[2] == O_MARK)
+      {
+         if(board[0] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      else if (board[3] == X_MARK && board[4] == X_MARK && board[5] == X_MARK || board[3] == O_MARK && board[4] == O_MARK && board[5] == O_MARK)
+      {
+         if(board[3] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      else if (board[6] == X_MARK && board[7] == X_MARK && board[8] == X_MARK || board[6] == O_MARK && board[7] == O_MARK && board[8] == O_MARK)
+      {
+         if(board[6] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      else if (board[0] == X_MARK && board[3] == X_MARK && board[6] == X_MARK || board[0] == O_MARK && board[3] == O_MARK && board[6] == O_MARK)
+      {
+         if(board[0] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      else if (board[1] == X_MARK && board[4] == X_MARK && board[7] == X_MARK || board[1] == O_MARK && board[4] == O_MARK && board[7] == O_MARK)
+      {
+         if(board[1] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      else if (board[2] == X_MARK && board[5] == X_MARK && board[8] == X_MARK || board[2] == O_MARK && board[5] == O_MARK && board[8] == O_MARK)
+      {
+         if(board[2] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      else if (board[0] == X_MARK && board[4] == X_MARK && board[8] == X_MARK || board[0] == O_MARK && board[4] == O_MARK && board[8] == O_MARK)
+      {
+         if(board[0] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      else if (board[2] == X_MARK && board[4] == X_MARK && board[6] == X_MARK || board[2] == O_MARK && board[4] == O_MARK && board[6] == O_MARK)
+      {
+         if(board[2] == X_MARK)
+            winner = player1;
+         else
+            winner = player2;
+         return true;
+      }
+      if(count == 9)
+      {
+         winner = "draw";
+         return true;
+      }
       return false;
    }
 
@@ -198,9 +268,20 @@ public class TicTacToeServer extends JFrame {
       public void otherPlayerMoved( int location )
       {
          // send message indicating move
-         try {
-            output.writeUTF( "Opponent moved" );
-            output.writeInt( location );
+         try
+         {
+            if(isGameOver())
+            {
+               if(winner == "draw")
+                  output.writeUTF(result+" "+winner);
+               else
+                  output.writeUTF(result+" "+winner+" wins");
+            }
+            else
+            {
+               output.writeUTF("Opponent moved");
+               output.writeInt(location);
+            }
          }
 
          // process problems sending message
@@ -247,7 +328,8 @@ public class TicTacToeServer extends JFrame {
             }
 
             // while game not over
-            while ( ! isGameOver() ) {
+            while ( ! isGameOver() )
+            {
 
                // get move location from client
                int location = input.readInt();
@@ -256,13 +338,22 @@ public class TicTacToeServer extends JFrame {
                if ( validateAndMove( location, playerNumber ) ) {
                   displayMessage( "\nlocation: " + location );
                   output.writeUTF( "Valid move." );
+                  count++;
                }
                else 
                   output.writeUTF( "Invalid move, try again" );
-            }         
-
+            }
+            if(winner == "draw")
+            {
+               displayMessage("\n" + result + winner);
+               output.writeUTF(result+" "+winner);
+            }
+            else
+            {
+               displayMessage("\n" + result + winner+" wins");
+               output.writeUTF(result+" "+winner+" wins");
+            }
             connection.close(); // close connection to client
-
          } // end try
 
          // process problems communicating with client
