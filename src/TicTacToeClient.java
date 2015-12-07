@@ -9,6 +9,7 @@ import javax.swing.*;
 public class TicTacToeClient extends JApplet implements Runnable {
    private JTextField idField;
    private JTextArea displayArea;
+   private JButton btn = new JButton();
    private JPanel boardPanel, panel2;
    private Square board[][], currentSquare;
    private Socket connection;
@@ -163,6 +164,44 @@ public class TicTacToeClient extends JApplet implements Runnable {
       {
          displayMessage(message + "\n");
          myTurn = false;
+      }
+      else if(message.equals("reset")){
+         panel2.add(btn);
+         btn.setBounds(20,20,80,40);
+         btn.setText("Reset");
+         btn.setVisible(true);
+         btn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               for( int r = 0; r <board.length;r++){
+                  for(int c = 0; c < board[r].length;c++){
+                     setMark(board[r][c],' ');
+                  }
+               }
+               displayArea.setText("");
+               displayArea.setText("Please wait for your turn\n");
+               try{
+                  output.writeInt(1);
+                  btn.setVisible(false);
+               }
+               catch(IOException IOE){
+                  IOE.printStackTrace();
+               }
+            }
+         });
+      }
+      else if(message.equals("reset2")){
+         for ( int row = 0; row < board.length; row++ ) {
+            for ( int column = 0; column < board[ row ].length; column++ ) {
+               // create Square
+               setMark(board[ row ][ column ], ' ');
+            }
+         }
+         btn.setVisible(false);
+         displayArea.setText("  ");
+         displayArea.setText("Other player started a new game\nYour Turn\n");
+
+         myTurn = true;
       }
       // simply display message
       else

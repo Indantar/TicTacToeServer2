@@ -11,6 +11,9 @@ public class TicTacToeServer extends JFrame {
    private JTextArea outputArea;
    private Player[] players;
    private ServerSocket server;
+   private Boolean reset = false;
+   private boolean replayBtn = false;
+   private boolean replayGame = true;
    private int currentPlayer;
    private int count;
    private final int PLAYER_X = 0, PLAYER_O = 1;
@@ -19,7 +22,7 @@ public class TicTacToeServer extends JFrame {
    private String player2 = "player 2";
    private String winner = "";
    private final String result = "The result is:";
-
+   int player_turns = 0;
    // set up tic-tac-toe server and GUI that displays messages
    public TicTacToeServer()
    {
@@ -291,79 +294,76 @@ public class TicTacToeServer extends JFrame {
       }
 
       // control thread's execution
-      public void run()
-      {
+      public void run() {
          // send client message indicating its mark (X or O),
          // process messages from client
          try {
-            displayMessage( "Player " + ( playerNumber == 
-               PLAYER_X ? X_MARK : O_MARK ) + " connected\n" );
- 
-            output.writeChar( mark ); // send player's mark
+            displayMessage("Player " + (playerNumber ==
+                    PLAYER_X ? X_MARK : O_MARK) + " connected\n");
+
+            output.writeChar(mark); // send player's mark
 
             // send message indicating connection
-            output.writeUTF( "Player " + ( playerNumber == PLAYER_X ? 
-               "X connected\n" : "O connected, please wait\n" ) );
+            output.writeUTF("Player " + (playerNumber == PLAYER_X ?
+                    "X connected\n" : "O connected, please wait\n"));
 
             // if player X, wait for another player to arrive
-            if ( mark == X_MARK ) {
-               output.writeUTF( "Waiting for another player" );
-   
+            if (mark == X_MARK) {
+               output.writeUTF("Waiting for another player");
+
                // wait for player O
                try {
-                  synchronized( this ) {   
-                     while ( suspended )
-                        wait();  
+                  synchronized (this) {
+                     while (suspended)
+                        wait();
                   }
-               } 
+               }
 
                // process interruptions while waiting
-               catch ( InterruptedException exception ) {
+               catch (InterruptedException exception) {
                   exception.printStackTrace();
                }
 
                // send message that other player connected and
                // player X can make a move
-               output.writeUTF( "Other player connected. Your move." );
+               output.writeUTF("Other player connected. Your move.");
             }
+            while (replayGame) {
+               // while game not over
+               while (!isGameOver())
+               {
+                  // get move location from client
+                  int location = input.readInt();
 
-            // while game not over
-            while ( ! isGameOver() )
-            {
-
-               // get move location from client
-               int location = input.readInt();
-
-               // check for valid move
-               if ( validateAndMove( location, playerNumber ) ) {
-                  displayMessage( "\nlocation: " + location );
-                  output.writeUTF( "Valid move." );
-                  count++;
+                  // check for valid move
+                  if (validateAndMove(location, playerNumber)) {
+                     displayMessage("\nlocation: " + location);
+                     output.writeUTF("Valid move.");
+                     count++;
+                  } else
+                     output.writeUTF("Invalid move, try again");
                }
-               else 
-                  output.writeUTF( "Invalid move, try again" );
-            }
-            if(winner == "draw")
-            {
-               displayMessage("\n" + result + winner);
-               output.writeUTF(result+" "+winner);
-            }
-            else
-            {
-               displayMessage("\n" + result + winner+" wins");
-               output.writeUTF(result+" "+winner+" wins");
+               if (winner == "draw")
+               {
+                  displayMessage("\n" + result + winner);
+                  output.writeUTF(result + " " + winner);
+                  waitForBtn(input);
+               } else
+               {
+                  displayMessage("\n" + result + winner + " wins");
+                  output.writeUTF(result + " " + winner + " wins");
+                  waitForBtn(input);
+               }
             }
             connection.close(); // close connection to client
-         } // end try
+         }// end try
 
          // process problems communicating with client
-         catch( IOException ioException ) {
+         catch (IOException ioException) {
             ioException.printStackTrace();
-            System.exit( 1 );
+            System.exit(1);
          }
-
-      } // end method run
-
+      }
       // set whether or not thread is suspended
       public void setSuspended( boolean status )
       {
@@ -371,7 +371,32 @@ public class TicTacToeServer extends JFrame {
       }
    
    } // end class Player
-
+   public void waitForBtn(DataInputStream in){
+      try {
+         while(reset == false) {
+            if (replayBtn == false) {
+               players[currentPlayer].output.writeUTF("reset");
+               currentPlayer = (currentPlayer + 1) % 2;
+               players[currentPlayer].output.writeUTF("reset");
+               replayBtn = true;
+            }
+            if (in.readInt() == 1) {
+               for (int i = 0; i < 9; i++) {
+                  board[i] = ' ';
+                  count = 0;
+                  replayBtn = false;
+                  reset = true;
+               }
+               currentPlayer = (currentPlayer + 1) % 2;
+               players[currentPlayer].output.writeUTF("reset2");
+               reset = true;
+            }
+         }
+      }
+      catch(Exception e){
+         e.printStackTrace();
+      }
+   }
 } // end class TicTacToeServer
 
 /**************************************************************************
